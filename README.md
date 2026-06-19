@@ -1,98 +1,182 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# board-api 란?
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+---
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 기술 스택
 
-## Description
+| 분류 | 기술 |
+|------|------|
+| 프레임워크 | NestJS 11 |
+| 언어 | TypeScript 5.7 |
+| DB | MongoDB (Mongoose 9) |
+| 인증 | JWT (7일 유효) |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 조사 필요
 
-## Project setup
+| 분류 | 기술 |
+|------|------|
+| 비밀번호 | bcryptjs |
+| 파일 업로드 | Multer |
+| 정적 파일 | @nestjs/serve-static |
 
-```bash
-$ yarn install
+---
+
+## 프로젝트 구조
+
+```
+src/
+├── auth/        # 로그인·회원가입, JWT Guard, Admin Guard
+├── users/       # 사용자 프로필, 비밀번호 변경
+├── posts/       # 게시글 CRUD, 댓글
+├── admin/       # 관리자 기능 (사용자·게시글 관리)
+└── upload/      # 이미지 업로드
+
+public/
+├── index.html   # 홈
+├── board.html   # 게시판
+├── login.html   # 로그인·회원가입
+├── profile.html # 프로필 관리
+├── admin.html   # 관리자 패널
+└── auth.js      # 클라이언트 인증 유틸
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ yarn run start
+## 환경 변수
 
-# watch mode
-$ yarn run start:dev
+`.env` 파일을 루트에 생성하세요.
 
-# production mode
-$ yarn run start:prod
+```env
+MONGODB_URI=mongodb://localhost:27017/board
+PORT=3000
+JWT_SECRET=your-secret-key
 ```
 
-## Run tests
+---
+
+## 실행
 
 ```bash
-# unit tests
-$ yarn run test
+# 의존성 설치
+yarn install
 
-# e2e tests
-$ yarn run test:e2e
+# 개발 서버
+yarn start:dev
 
-# test coverage
-$ yarn run test:cov
+# 프로덕션
+yarn build && yarn start:prod
+
+# 관리자 계정 시딩
+yarn seed:admin
 ```
 
-## Deployment
+서버 실행 후 http://localhost:3000 에서 확인할 수 있습니다.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+---
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## API 엔드포인트
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+### 인증 `/api/auth`
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/auth/register` | 회원가입 |
+| POST | `/api/auth/login` | 로그인 → JWT 반환 |
+
+### 사용자 `/api/users` (JWT 필요)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/api/users/me` | 내 정보 조회 |
+| PATCH | `/api/users/me` | 닉네임·이메일 수정 |
+| PATCH | `/api/users/me/password` | 비밀번호 변경 |
+| GET | `/api/users/me/posts` | 내 게시글 목록 |
+
+### 게시글 `/posts`
+
+| 메서드 | 경로 | 인증 | 설명 |
+|--------|------|------|------|
+| GET | `/posts` | - | 목록 조회 (검색: `?search=키워드`) |
+| GET | `/posts/:id` | - | 상세 조회 |
+| POST | `/posts` | JWT | 게시글 작성 |
+| PATCH | `/posts/:id` | JWT | 수정 (작성자만) |
+| DELETE | `/posts/:id` | JWT | 삭제 (작성자만) |
+| GET | `/posts/:id/comments` | - | 댓글 목록 |
+| POST | `/posts/:id/comments` | - | 댓글 추가 |
+
+### 파일 업로드
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/upload` | 이미지 업로드 (jpg·png·gif·webp, 최대 5MB) |
+
+### 관리자 `/api/admin` (관리자 계정 필요)
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/api/admin/stats` | 통계 (사용자·게시글·오늘 가입자·차단 수) |
+| GET | `/api/admin/users` | 사용자 목록 |
+| GET | `/api/admin/users/:id` | 사용자 상세 + 게시글 |
+| POST | `/api/admin/users/:id/ban` | 차단 (기간·사유 지정) |
+| POST | `/api/admin/users/:id/unban` | 차단 해제 |
+| DELETE | `/api/admin/users/:id` | 강제탈퇴 (게시글 포함 삭제) |
+| GET | `/api/admin/posts` | 게시글 목록 (검색: `?q=키워드`) |
+| PATCH | `/api/admin/posts/:id` | 게시글 수정 |
+| DELETE | `/api/admin/posts/:id` | 게시글 삭제 |
+
+---
+
+## 주요 기능
+
+### 인증
+- JWT 기반 (유효기간 7일)
+- 차단 계정 로그인 시 차단 기간·사유 안내
+- 차단 기간 만료 시 자동 해제
+
+### 게시판
+- 제목·내용·작성자 통합 검색 (정규식, 대소문자 구분 없음)
+- 게시글 삭제 시 관련 댓글 함께 삭제
+
+## 조사 필요
+
+### 파일 업로드
+- 저장 경로: `public/uploads/`
+- 파일명: `{timestamp}-{random}.{ext}` (중복 방지)
+- 응답: `{ url: "/uploads/파일명" }`
+
+### 입력 검증
+- 전역 `ValidationPipe` 적용
+- DTO에 없는 필드 자동 제거 (`whitelist: true`)
+- 한글 에러 메시지 제공
+
+---
+
+## 데이터 모델
+
+### User
+```
+username    String  (고유, 4~20자)
+password    String  (bcrypt 해싱)
+nickname    String
+email       String  (선택)
+role        'user' | 'admin'
+status      'active' | 'banned'
+banUntil    Date    (차단 만료일)
+banReason   String
+lastLoginAt Date
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Post
+```
+title     String
+content   String
+author    String  (닉네임)
+authorId  String
+```
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Comment
+```
+postId  String
+author  String
+text    String
+```
