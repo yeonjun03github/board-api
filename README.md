@@ -1,4 +1,4 @@
-# board-api 란?
+# board-api (미완성)
 
 ---
 
