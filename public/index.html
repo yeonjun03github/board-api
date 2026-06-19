@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>홈</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="/auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+    header {
+      background: #1a56db;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+    }
+    header h1 { color: #fff; font-size: 18px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
+    nav { display: flex; gap: 8px; }
+    nav a { color: #93c5fd; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.15s; }
+    nav a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    nav a.active { background: #fff; color: #1a56db; }
+    #auth-area { display: flex; align-items: center; gap: 10px; }
+
+    .hero { max-width: 640px; margin: 6rem auto; text-align: center; padding: 0 1rem; }
+    .hero h2 { font-size: 28px; font-weight: 600; color: #1e293b; margin-bottom: 4rem; }
+    .hero p { font-size: 15px; color: #64748b; margin-bottom: 2.5rem; line-height: 1.7; }
+
+    .menu-cards { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 2rem; text-decoration: none; transition: all 0.15s; text-align: left;
+    }
+    .card:hover { border-color: #1a56db; box-shadow: 0 20px 20px rgba(26,86,219,0.1); transform: translateY(-2px); }
+    .card-icon { font-size: 28px; margin-bottom: 0.75rem; }
+    .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 0.5rem; }
+    .card-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 내 사이트</h1>
+  <div class="header-right">
+    <nav>
+      <a href="/" class="active">홈</a>
+      <a href="/board">게시판</a>
+    </nav>
+    <div id="auth-area"></div>
+  </div>
+</header>
+
+<div class="hero">
+  <h2>환영해요 👋</h2>
+
+  <div class="menu-cards">
+    <a href="/board" class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">게시판</div>
+      <div class="card-desc">자유롭게 글을 작성하고 소통해요.</div>
+    </a>
+</div>
+
+<script>
+  Auth.renderAuthArea('#93c5fd');
+</script>
+</body>
+</html>

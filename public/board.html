@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>게시판</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="/auth.js"></script>
+    <style>
+        :root {
+            --blue-primary: #1a56db; --blue-dark: #1e3a8a; --blue-light: #dbeafe; --blue-pale: #eff6ff;
+            --white: #ffffff; --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-400: #94a3b8; --gray-600: #475569; --gray-800: #1e293b;
+            --red: #ef4444; --green: #16a34a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+        header {
+            background: var(--blue-primary); padding: 0 2rem; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+        }
+        header h1 { color: var(--white); font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        nav { display: flex; gap: 8px; }
+        nav a { color: #93c5fd; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.15s; }
+        nav a:hover { background: rgba(255,255,255,0.15); color: var(--white); }
+        nav a.active { background: var(--white); color: var(--blue-primary); }
+        #auth-area { display: flex; align-items: center; gap: 10px; }
+
+        .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 1rem 1.25rem; }
+        .stat-card .label { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
+        .stat-card .value { font-size: 24px; font-weight: 600; color: var(--blue-primary); }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .toolbar-info { font-size: 13px; color: var(--gray-600); }
+
+        .btn { border: none; border-radius: 8px; padding: 9px 18px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: background 0.15s; }
+        .btn-primary { background: var(--blue-primary); color: var(--white); }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .btn-secondary { background: var(--white); color: var(--gray-600); border: 1px solid var(--gray-200); }
+        .btn-secondary:hover { background: var(--gray-100); }
+        .btn-danger { background: #fee2e2; color: var(--red); border: none; }
+        .btn-danger:hover { background: #fecaca; }
+
+        .search-wrap { display: flex; gap: 8px; margin-bottom: 1rem; }
+        .search-wrap input { flex: 1; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; color: var(--gray-800); outline: none; transition: border-color 0.15s; }
+        .search-wrap input:focus { border-color: var(--blue-primary); }
+
+        .table-wrap { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--blue-pale); border-bottom: 1px solid var(--blue-light); }
+        thead th { padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--blue-primary); text-align: left; }
+        thead th:first-child { width: 60px; text-align: center; }
+        thead th:nth-child(3) { width: 90px; }
+        thead th:last-child { width: 100px; text-align: center; }
+        tbody tr { border-bottom: 1px solid var(--gray-100); cursor: pointer; transition: background 0.12s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--blue-pale); }
+        tbody td { padding: 13px 16px; font-size: 14px; }
+        tbody td:first-child { color: var(--gray-400); font-size: 13px; text-align: center; }
+        tbody td:nth-child(3) { color: var(--gray-600); font-size: 13px; }
+        tbody td:last-child { text-align: center; }
+
+        .badge-new { background: var(--blue-light); color: var(--blue-primary); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+
+        .pagination { display: flex; justify-content: center; gap: 4px; margin-top: 1.5rem; }
+        .page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-size: 14px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.12s; }
+        .page-btn.active { background: var(--blue-primary); color: var(--white); border-color: var(--blue-primary); font-weight: 600; }
+        .page-btn:hover:not(.active) { background: var(--blue-pale); border-color: var(--blue-light); }
+
+        .msg { text-align: center; padding: 3rem; font-size: 14px; color: var(--gray-400); }
+        .msg.error { color: var(--red); }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--white); border-radius: 14px; padding: 2rem; width: 100%; max-width: 500px; margin: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+        .modal h2 { font-size: 18px; font-weight: 600; color: var(--gray-800); margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-600); margin-bottom: 6px; }
+        .form-group input, .form-group textarea { width: 100%; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; color: var(--gray-800); outline: none; transition: border-color 0.15s; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--blue-primary); }
+        .form-group textarea { height: 120px; resize: vertical; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+        .detail-title { font-size: 20px; font-weight: 600; color: var(--gray-800); margin-bottom: 0.5rem; }
+        .detail-meta { font-size: 13px; color: var(--gray-400); margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200); }
+        .detail-content { font-size: 15px; line-height: 1.8; color: var(--gray-800); white-space: pre-wrap; margin-bottom: 1.5rem; }
+        .detail-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+
+        .comment-section { border-top: 1px solid var(--gray-200); margin-top: 1.5rem; padding-top: 1rem; }
+        .comment-section-title { font-size: 13px; font-weight: 600; color: var(--gray-600); display: block; margin-bottom: 0.75rem; }
+        .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1rem; max-height: 200px; overflow-y: auto; }
+        .comment-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 12px; }
+        .comment-meta { display: flex; gap: 8px; margin-bottom: 4px; }
+        .comment-meta .author { font-size: 12px; font-weight: 600; color: var(--blue-primary); }
+        .comment-meta .date { font-size: 12px; color: var(--gray-400); }
+        .comment-item .text { font-size: 13px; color: var(--gray-800); line-height: 1.5; }
+        .comment-empty { font-size: 13px; color: var(--gray-400); text-align: center; padding: 1rem 0; }
+        .comment-input-box { display: flex; flex-direction: column; gap: 6px; }
+        .comment-input-box input { border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; outline: none; transition: border-color 0.15s; width: 140px; }
+        .comment-input-box input:focus { border-color: var(--blue-primary); }
+        .comment-textarea-wrap { display: flex; gap: 8px; align-items: flex-end; }
+        .comment-textarea-wrap textarea { flex: 1; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; outline: none; resize: none; height: 60px; transition: border-color 0.15s; }
+        .comment-textarea-wrap textarea:focus { border-color: var(--blue-primary); }
+        .btn-sm { padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📋 게시판</h1>
+    <div class="header-right">
+        <nav>
+            <a href="/">홈</a>
+            <a href="/board" class="active">게시판</a>
+        </nav>
+        <div id="auth-area"></div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="stats">
+        <div class="stat-card"><div class="label">전체 게시글</div><div class="value" id="total-count">-</div></div>
+        <div class="stat-card"><div class="label">서버 상태</div><div class="value" id="server-state" style="font-size:15px;padding-top:5px;">확인 중</div></div>
+        <div class="stat-card"><div class="label">현재 페이지</div><div class="value" id="current-page-stat">1</div></div>
+    </div>
+
+    <div class="toolbar">
+        <span class="toolbar-info" id="list-info">게시글 목록</span>
+        <button class="btn btn-primary" onclick="openWrite()">✏️ 글쓰기</button>
+    </div>
+
+    <div class="search-wrap">
+        <input type="text" id="search-input" placeholder="제목, 작성자, 내용으로 검색하세요" onkeydown="if(event.key==='Enter') searchPosts()" />
+        <button class="btn btn-primary" onclick="searchPosts()">🔍 검색</button>
+        <button class="btn btn-secondary" onclick="resetSearch()">초기화</button>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>번호</th><th>제목</th><th>작성자</th><th>작성일</th></tr></thead>
+            <tbody id="post-list"><tr><td colspan="4" class="msg">불러오는 중...</td></tr></tbody>
+        </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- 글쓰기 모달 -->
+<div class="modal-overlay" id="write-modal">
+    <div class="modal">
+        <h2>✏️ 새 글 작성</h2>
+
+        <div class="form-group">
+            <label>제목</label>
+            <input type="text" id="input-title" placeholder="제목을 입력하세요" />
+        </div>
+
+        <div class="form-group">
+            <label>내용</label>
+            <textarea id="input-content" placeholder="내용을 입력하세요"></textarea>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('write-modal')">취소</button>
+            <button class="btn btn-primary" onclick="submitPost()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- 상세보기 모달 -->
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal">
+        <div class="detail-title" id="detail-title"></div>
+        <div class="detail-meta" id="detail-meta"></div>
+        <div class="detail-content" id="detail-content"></div>
+
+        <!-- 💬 댓글 영역 -->
+        <div class="comment-section">
+            <label class="comment-section-title">댓글</label>
+            <div class="comment-list" id="comment-list">
+                <div class="comment-empty">아직 댓글이 없어요.</div>
+            </div>
+            <div class="comment-input-box">
+                <input type="text" id="comment-author" placeholder="작성자" />
+                <div class="comment-textarea-wrap">
+                    <textarea id="comment-text" placeholder="댓글을 입력하세요"></textarea>
+                    <button class="btn btn-primary btn-sm" onclick="submitComment()">등록</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-actions">
+            <button class="btn btn-danger" id="btn-delete" style="display:none" onclick="deletePost()">🗑 삭제</button>
+            <button class="btn btn-secondary" onclick="closeModal('detail-modal')">닫기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:3000';
+    let posts = [], currentPage = 1, selectedId = null;
+    const perPage = 10;
+
+    Auth.renderAuthArea('#93c5fd');
+
+    async function loadPosts(search = '') {
+        try {
+            const url = search ? `${API}/posts?search=${encodeURIComponent(search)}` : `${API}/posts`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error();
+            posts = await res.json();
+            document.getElementById('total-count').textContent = posts.length;
+            document.getElementById('server-state').textContent = '✅ 정상';
+            document.getElementById('server-state').style.color = 'var(--green)';
+            renderPage(1);
+        } catch {
+            document.getElementById('server-state').textContent = '❌ 오류';
+            document.getElementById('server-state').style.color = 'var(--red)';
+            document.getElementById('total-count').textContent = '-';
+            document.getElementById('post-list').innerHTML = '<tr><td colspan="4" class="msg error">서버에 연결할 수 없어요.</td></tr>';
+        }
+    }
+
+    function searchPosts() {
+        const keyword = document.getElementById('search-input').value.trim();
+        if (!keyword) { resetSearch(); return; }
+        loadPosts(keyword);
+    }
+
+    function resetSearch() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('list-info').textContent = '게시글 목록';
+        loadPosts();
+    }
+
+    function renderPage(page) {
+        currentPage = page;
+        const start = (page - 1) * perPage;
+        const pagePosts = posts.slice(start, start + perPage);
+        const tbody = document.getElementById('post-list');
+        document.getElementById('list-info').textContent = `전체 ${posts.length}개 게시글`;
+        document.getElementById('current-page-stat').textContent = page;
+
+        if (!posts.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="msg">아직 작성된 게시글이 없어요.</td></tr>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = pagePosts.map((p, i) => {
+            const num  = posts.length - (start + i);
+            const date = new Date(p.createdAt).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+            const isNew = (Date.now() - new Date(p.createdAt)) < 86400000;
+            return `<tr onclick="openDetail('${p._id}')">
+                <td>${num}</td>
+                <td>${p.title}${isNew ? '<span class="badge-new">NEW</span>' : ''}</td>
+                <td>${p.author}</td>
+                <td>${date}</td>
+            </tr>`;
+        }).join('');
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const total = Math.ceil(posts.length / perPage);
+        const pg = document.getElementById('pagination');
+        if (total <= 1) { pg.innerHTML = ''; return; }
+        pg.innerHTML = Array.from({ length: total }, (_, i) =>
+            `<button class="page-btn ${i+1===currentPage?'active':''}" onclick="renderPage(${i+1})">${i+1}</button>`
+        ).join('');
+    }
+
+    function openWrite() {
+        if (!Auth.requireLogin()) return;
+        document.getElementById('input-title').value = '';
+        document.getElementById('input-content').value = '';
+        document.getElementById('write-modal').classList.add('open');
+    }
+
+    async function submitPost() {
+        const title   = document.getElementById('input-title').value.trim();
+        const content = document.getElementById('input-content').value.trim();
+        if (!title || !content) { alert('제목과 내용을 입력해주세요.'); return; }
+        try {
+            const res = await fetch(`${API}/posts`, {
+                method: 'POST',
+                headers: Auth.headers(),
+                body: JSON.stringify({ title, content }),
+            });
+            if (!res.ok) {
+                const d = await res.json();
+                throw new Error(d.message || '등록 실패');
+            }
+            closeModal('write-modal');
+            await loadPosts();
+        } catch (e) { alert(e.message); }
+    }
+
+    function openDetail(id) {
+        selectedId = id;
+        const post = posts.find(p => p._id === id);
+        if (!post) return;
+        document.getElementById('detail-title').textContent = post.title;
+        document.getElementById('detail-meta').textContent = `${post.author} · ${new Date(post.createdAt).toLocaleString('ko-KR')}`;
+        document.getElementById('detail-content').textContent = post.content;
+
+        // 본인 글에만 삭제 버튼 표시
+        const myId = Auth.getUser()?.userId;
+        document.getElementById('btn-delete').style.display =
+            (myId && post.authorId === myId) ? 'inline-block' : 'none';
+
+        document.getElementById('comment-author').value = '';
+        document.getElementById('comment-text').value = '';
+        renderComments(id);
+        document.getElementById('detail-modal').classList.add('open');
+    }
+
+    async function renderComments(postId) {
+        const list = document.getElementById('comment-list');
+        try {
+            const res = await fetch(`${API}/posts/${postId}/comments`);
+            const comments = await res.json();
+            if (!comments.length) {
+                list.innerHTML = '<div class="comment-empty">아직 댓글이 없어요.</div>';
+                return;
+            }
+            list.innerHTML = comments.map(c => {
+                const date = new Date(c.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                return `<div class="comment-item">
+                    <div class="comment-meta">
+                        <span class="author">${c.author}</span>
+                        <span class="date">${date}</span>
+                    </div>
+                    <p class="text">${c.text}</p>
+                </div>`;
+            }).join('');
+        } catch {
+            list.innerHTML = '<div class="comment-empty">댓글을 불러올 수 없어요.</div>';
+        }
+    }
+
+    async function submitComment() {
+        const author = document.getElementById('comment-author').value.trim();
+        const text   = document.getElementById('comment-text').value.trim();
+        if (!author || !text) { alert('작성자와 댓글 내용을 입력해주세요.'); return; }
+        try {
+            const res = await fetch(`${API}/posts/${selectedId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ author, text }),
+            });
+            if (!res.ok) throw new Error();
+            document.getElementById('comment-author').value = '';
+            document.getElementById('comment-text').value = '';
+            await renderComments(selectedId);
+        } catch { alert('댓글 등록에 실패했어요.'); }
+    }
+
+    async function deletePost() {
+        if (!confirm('정말 삭제할까요?')) return;
+        try {
+            const res = await fetch(`${API}/posts/${selectedId}`, { method: 'DELETE', headers: Auth.headers() });
+            if (!res.ok) { const d = await res.json(); throw new Error(d.message); }
+            closeModal('detail-modal');
+            await loadPosts();
+        } catch (e) { alert(e.message); }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+    });
+
+    loadPosts();
+</script>
+</body>
+</html>

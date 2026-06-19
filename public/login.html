@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="/auth.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; flex-direction: column; }
+
+        header {
+            background: #1a56db;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+        }
+        header h1 { color: #fff; font-size: 18px; font-weight: 600; }
+        header a { color: #93c5fd; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all 0.15s; }
+        header a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+        .wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+        }
+
+        .tabs { display: flex; margin-bottom: 2rem; border-bottom: 2px solid #e2e8f0; }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #94a3b8;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.15s;
+        }
+        .tab.active { color: #1a56db; border-bottom-color: #1a56db; }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+
+        h2 { font-size: 20px; font-weight: 600; color: #1e293b; margin-bottom: 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 11px 14px;
+            font-size: 14px;
+            font-family: 'Noto Sans KR', sans-serif;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .form-group input:focus { border-color: #1a56db; }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: #1a56db;
+            color: #fff;
+            margin-top: 0.5rem;
+            transition: background 0.15s;
+        }
+        .btn:hover { background: #1e3a8a; }
+
+        .msg { margin-top: 1rem; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+        .msg.error { background: #fee2e2; color: #dc2626; display: block; }
+        .msg.success { background: #d1fae5; color: #065f46; display: block; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>🔐 로그인</h1>
+    <a href="/">← 홈으로</a>
+</header>
+
+<div class="wrap">
+    <div class="card">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('login')">로그인</div>
+            <div class="tab" onclick="switchTab('register')">회원가입</div>
+        </div>
+
+        <!-- 로그인 -->
+        <div class="form-section active" id="tab-login">
+            <div class="form-group">
+                <label>아이디</label>
+                <input type="text" id="login-username" placeholder="아이디 입력" onkeydown="if(event.key==='Enter') doLogin()" />
+            </div>
+            <div class="form-group">
+                <label>비밀번호</label>
+                <input type="password" id="login-password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter') doLogin()" />
+            </div>
+            <button class="btn" onclick="doLogin()">로그인</button>
+            <div class="msg" id="login-msg"></div>
+        </div>
+
+        <!-- 회원가입 -->
+        <div class="form-section" id="tab-register">
+            <div class="form-group">
+                <label>아이디 <span style="color:#94a3b8;font-weight:400">(4~20자)</span></label>
+                <input type="text" id="reg-username" placeholder="영문, 숫자 조합" />
+            </div>
+            <div class="form-group">
+                <label>비밀번호 <span style="color:#94a3b8;font-weight:400">(6자 이상)</span></label>
+                <input type="password" id="reg-password" placeholder="비밀번호 입력" />
+            </div>
+            <div class="form-group">
+                <label>닉네임</label>
+                <input type="text" id="reg-nickname" placeholder="표시될 이름" />
+            </div>
+            <div class="form-group">
+                <label>이메일 <span style="color:#94a3b8;font-weight:400">(선택)</span></label>
+                <input type="email" id="reg-email" placeholder="example@email.com" />
+            </div>
+            <button class="btn" onclick="doRegister()">회원가입</button>
+            <div class="msg" id="reg-msg"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 이미 로그인 상태면 홈으로
+    if (Auth.isLoggedIn()) window.location.href = '/';
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', (i === 0) === (tab === 'login')));
+        document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+        document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    }
+
+    function showMsg(id, text, type) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = `msg ${type}`;
+    }
+
+    async function doLogin() {
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        if (!username || !password) { showMsg('login-msg', '아이디와 비밀번호를 입력해주세요.', 'error'); return; }
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || '로그인 실패');
+            Auth.setSession(data.token, data.user);
+            window.location.href = '/';
+        } catch (e) {
+            showMsg('login-msg', e.message, 'error');
+        }
+    }
+
+    async function doRegister() {
+        const username = document.getElementById('reg-username').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const nickname = document.getElementById('reg-nickname').value.trim();
+        const email    = document.getElementById('reg-email').value.trim();
+        if (!username || !password || !nickname) { showMsg('reg-msg', '필수 항목을 모두 입력해주세요.', 'error'); return; }
+        try {
+            const body = { username, password, nickname };
+            if (email) body.email = email;
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || '회원가입 실패');
+            showMsg('reg-msg', '회원가입 완료! 로그인 해주세요.', 'success');
+            setTimeout(() => switchTab('login'), 1200);
+        } catch (e) {
+            showMsg('reg-msg', e.message, 'error');
+        }
+    }
+</script>
+</body>
+</html>

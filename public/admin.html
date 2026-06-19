@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 패널</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="/auth.js"></script>
+  <style>
+    :root {
+      --blue: #1a56db;
+      --blue-dark: #1e3a8a;
+      --blue-light: #dbeafe;
+      --blue-pale: #eff6ff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-600: #475569;
+      --gray-800: #1e293b;
+      --red: #ef4444;
+      --red-light: #fee2e2;
+      --green: #16a34a;
+      --green-light: #d1fae5;
+      --orange: #f59e0b;
+      --orange-light: #fef3c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); min-height: 100vh; color: var(--gray-800); }
+
+    /* Header */
+    header {
+      background: var(--blue-dark);
+      height: 60px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    header h1 { color: #fff; font-size: 17px; font-weight: 600; }
+    .admin-badge { background: #fbbf24; color: #1e293b; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 99px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .btn-sm { font-size: 13px; padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .btn-ghost { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-ghost:hover { background: rgba(255,255,255,0.25); }
+
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.25rem 1.5rem; }
+    .stat-label { font-size: 13px; color: var(--gray-600); margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-800); }
+    .stat-card.banned .stat-value { color: var(--red); }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 2px solid var(--gray-200); }
+    .tab-btn { padding: 10px 20px; background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 500;
+      color: var(--gray-600); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.15s; font-family: inherit; }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-btn:hover:not(.active) { color: var(--gray-800); }
+
+    /* Toolbar */
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .search-input { padding: 8px 14px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 14px; font-family: inherit; width: 280px; outline: none; transition: border 0.15s; }
+    .search-input:focus { border-color: var(--blue); }
+
+    /* Table */
+    .table-wrap { background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--blue-pale); }
+    th { padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--blue); white-space: nowrap; }
+    td { padding: 11px 14px; border-top: 1px solid var(--gray-100); vertical-align: middle; }
+    tr:hover td { background: var(--gray-50); }
+    .empty-row td { text-align: center; color: var(--gray-400); padding: 2.5rem; }
+
+    /* Status Badge */
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge-active { background: var(--green-light); color: var(--green); }
+    .badge-banned { background: var(--red-light); color: var(--red); }
+    .badge-admin { background: var(--orange-light); color: var(--orange); }
+
+    /* Action Buttons */
+    .action-wrap { display: flex; gap: 5px; flex-wrap: wrap; }
+    .btn-action { padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+    .btn-ban { background: var(--orange-light); color: #92400e; }
+    .btn-ban:hover { background: #fde68a; }
+    .btn-unban { background: var(--green-light); color: var(--green); }
+    .btn-unban:hover { background: #a7f3d0; }
+    .btn-del { background: var(--red-light); color: var(--red); }
+    .btn-del:hover { background: #fecaca; }
+    .btn-edit { background: var(--blue-light); color: var(--blue); }
+    .btn-edit:hover { background: #bfdbfe; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex;
+      align-items: center; justify-content: center; z-index: 100; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 2rem; width: 420px; max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+    .modal-box h3 { font-size: 17px; font-weight: 600; margin-bottom: 1.25rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-600); margin-bottom: 5px; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 14px; font-family: inherit; outline: none; transition: border 0.15s; }
+    .form-control:focus { border-color: var(--blue); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+    .btn-primary { background: var(--blue); color: #fff; padding: 9px 20px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-secondary { background: var(--gray-100); color: var(--gray-800); padding: 9px 20px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .btn-secondary:hover { background: var(--gray-200); }
+    .btn-danger { background: var(--red); color: #fff; padding: 9px 20px; border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; }
+    .msg-error { background: var(--red-light); color: #b91c1c; }
+    .msg-success { background: var(--green-light); color: #065f46; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>관리자 패널</h1>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="header-right">
+    <button class="btn-sm btn-ghost" onclick="location.href='/'">사이트로 돌아가기</button>
+    <button class="btn-sm btn-ghost" onclick="logout()">로그아웃</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">총 이용자</div><div class="stat-value" id="stat-users">-</div></div>
+    <div class="stat-card"><div class="stat-label">총 게시물</div><div class="stat-value" id="stat-posts">-</div></div>
+    <div class="stat-card"><div class="stat-label">오늘 가입</div><div class="stat-value" id="stat-today">-</div></div>
+    <div class="stat-card banned"><div class="stat-label">현재 차단 중</div><div class="stat-value" id="stat-banned">-</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('users')">이용자 관리</button>
+    <button class="tab-btn" onclick="switchTab('posts')">게시물 관리</button>
+  </div>
+
+  <!-- Users Tab -->
+  <div id="tab-users">
+    <div class="toolbar">
+      <input class="search-input" id="user-search" placeholder="아이디 또는 닉네임 검색..." oninput="filterUsers()" />
+      <span id="users-count" style="font-size:13px;color:var(--gray-600)"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>아이디</th><th>닉네임</th><th>이메일</th><th>가입일</th>
+            <th>마지막 접속</th><th>게시물</th><th>상태</th><th>액션</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"><tr class="empty-row"><td colspan="8">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Posts Tab -->
+  <div id="tab-posts" style="display:none">
+    <div class="toolbar">
+      <input class="search-input" id="post-search" placeholder="제목 또는 작성자 검색..." oninput="searchPosts()" />
+      <span id="posts-count" style="font-size:13px;color:var(--gray-600)"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>제목</th><th>작성자</th><th>작성일</th><th>액션</th></tr>
+        </thead>
+        <tbody id="posts-tbody"><tr class="empty-row"><td colspan="4">불러오는 중...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Ban Modal -->
+<div id="ban-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>이용자 차단</h3>
+    <div id="ban-msg"></div>
+    <div class="form-group">
+      <label>차단 대상</label>
+      <div id="ban-target-info" style="font-size:14px;font-weight:600;color:var(--gray-800)"></div>
+    </div>
+    <div class="form-group">
+      <label>차단 유형</label>
+      <select class="form-control" id="ban-type" onchange="toggleDuration()">
+        <option value="permanent">무기한</option>
+        <option value="temporary">유기한</option>
+      </select>
+    </div>
+    <div class="form-group" id="ban-duration-wrap" style="display:none">
+      <label>차단 기간 (일)</label>
+      <input class="form-control" type="number" id="ban-duration" min="1" placeholder="예: 7" />
+    </div>
+    <div class="form-group">
+      <label>차단 사유</label>
+      <input class="form-control" type="text" id="ban-reason" placeholder="사유를 입력하세요" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeBanModal()">취소</button>
+      <button class="btn-danger" onclick="confirmBan()">차단</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User Modal -->
+<div id="delete-user-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>강제탈퇴</h3>
+    <div id="delete-user-msg"></div>
+    <p style="font-size:14px;color:var(--gray-600);line-height:1.6;margin-bottom:1rem">
+      <strong id="delete-user-name"></strong> 이용자를 강제탈퇴 처리합니다.<br>
+      작성한 모든 게시물도 함께 삭제됩니다. 이 작업은 되돌릴 수 없어요.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeDeleteUserModal()">취소</button>
+      <button class="btn-danger" onclick="confirmDeleteUser()">강제탈퇴</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div id="edit-post-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>게시물 수정</h3>
+    <div id="edit-post-msg"></div>
+    <div class="form-group">
+      <label>제목</label>
+      <input class="form-control" type="text" id="edit-post-title" />
+    </div>
+    <div class="form-group">
+      <label>내용</label>
+      <textarea class="form-control" id="edit-post-content" rows="6" style="resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEditPostModal()">취소</button>
+      <button class="btn-primary" onclick="confirmEditPost()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';
+  let allUsers = [];
+  let currentBanTarget = null;
+  let currentDeleteTarget = null;
+  let currentEditPost = null;
+  let postSearchTimer = null;
+
+  // ─── 초기화 ───────────────────────────────────────
+  (function init() {
+    const user = Auth.getUser();
+    if (!user || user.role !== 'admin') {
+      alert('관리자만 접근할 수 있어요.');
+      location.href = '/';
+      return;
+    }
+    loadStats();
+    loadUsers();
+  })();
+
+  function logout() {
+    Auth.clearSession();
+    location.href = '/login';
+  }
+
+  // ─── 탭 전환 ──────────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('tab-users').style.display = tab === 'users' ? '' : 'none';
+    document.getElementById('tab-posts').style.display = tab === 'posts' ? '' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'users') || (i === 1 && tab === 'posts'));
+    });
+    if (tab === 'posts') loadPosts();
+  }
+
+  // ─── Stats ────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const res = await fetch(`${API}/api/admin/stats`, { headers: Auth.headers() });
+      if (!res.ok) return;
+      const d = await res.json();
+      document.getElementById('stat-users').textContent = d.totalUsers.toLocaleString();
+      document.getElementById('stat-posts').textContent = d.totalPosts.toLocaleString();
+      document.getElementById('stat-today').textContent = d.todaySignups.toLocaleString();
+      document.getElementById('stat-banned').textContent = d.bannedCount.toLocaleString();
+    } catch {}
+  }
+
+  // ─── Users ────────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API}/api/admin/users`, { headers: Auth.headers() });
+      if (!res.ok) return;
+      allUsers = await res.json();
+      renderUsers(allUsers);
+    } catch {}
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    const filtered = q
+      ? allUsers.filter(u => u.username.includes(q) || u.nickname.includes(q))
+      : allUsers;
+    renderUsers(filtered);
+  }
+
+  function renderUsers(users) {
+    document.getElementById('users-count').textContent = `${users.length}명`;
+    const tbody = document.getElementById('users-tbody');
+    if (!users.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">이용자가 없어요</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const isBanned = u.status === 'banned';
+      const isAdmin = u.role === 'admin';
+      const banInfo = isBanned
+        ? (u.banUntil ? ` (~${new Date(u.banUntil).toLocaleDateString('ko-KR')})` : ' (무기한)')
+        : '';
+      return `<tr>
+        <td><strong>${esc(u.username)}</strong>${isAdmin ? ' <span class="badge badge-admin">관리자</span>' : ''}</td>
+        <td>${esc(u.nickname)}</td>
+        <td>${esc(u.email || '-')}</td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td>${u.lastLoginAt ? fmtDate(u.lastLoginAt) : '-'}</td>
+        <td>${u.postCount}</td>
+        <td>
+          <span class="badge ${isBanned ? 'badge-banned' : 'badge-active'}">
+            ${isBanned ? '차단' + banInfo : '정상'}
+          </span>
+        </td>
+        <td>
+          ${isAdmin ? '<span style="font-size:12px;color:var(--gray-400)">보호됨</span>' : `
+          <div class="action-wrap">
+            ${!isBanned
+              ? `<button class="btn-action btn-ban" onclick="openBanModal('${u._id}','${esc(u.username)}')">차단</button>`
+              : `<button class="btn-action btn-unban" onclick="doUnban('${u._id}')">차단 해제</button>`
+            }
+            <button class="btn-action btn-del" onclick="openDeleteUserModal('${u._id}','${esc(u.username)}')">강제탈퇴</button>
+          </div>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ─── Ban ──────────────────────────────────────────
+  function openBanModal(id, username) {
+    currentBanTarget = id;
+    document.getElementById('ban-target-info').textContent = username;
+    document.getElementById('ban-type').value = 'permanent';
+    document.getElementById('ban-duration').value = '';
+    document.getElementById('ban-reason').value = '';
+    document.getElementById('ban-duration-wrap').style.display = 'none';
+    document.getElementById('ban-msg').innerHTML = '';
+    document.getElementById('ban-modal').style.display = 'flex';
+  }
+
+  function closeBanModal() {
+    document.getElementById('ban-modal').style.display = 'none';
+    currentBanTarget = null;
+  }
+
+  function toggleDuration() {
+    const isTemp = document.getElementById('ban-type').value === 'temporary';
+    document.getElementById('ban-duration-wrap').style.display = isTemp ? '' : 'none';
+  }
+
+  async function confirmBan() {
+    if (!currentBanTarget) return;
+    const reason = document.getElementById('ban-reason').value.trim();
+    if (!reason) { showModalMsg('ban-msg', '차단 사유를 입력해주세요', 'error'); return; }
+
+    const isTemp = document.getElementById('ban-type').value === 'temporary';
+    const duration = isTemp ? parseInt(document.getElementById('ban-duration').value) : undefined;
+    if (isTemp && (!duration || duration < 1)) { showModalMsg('ban-msg', '차단 기간을 입력해주세요', 'error'); return; }
+
+    const body = { reason };
+    if (isTemp) body.duration = duration;
+
+    try {
+      const res = await fetch(`${API}/api/admin/users/${currentBanTarget}/ban`, {
+        method: 'POST', headers: Auth.headers(), body: JSON.stringify(body),
+      });
+      const d = await res.json();
+      if (!res.ok) { showModalMsg('ban-msg', d.message || '오류가 발생했어요', 'error'); return; }
+      closeBanModal();
+      await loadUsers();
+      loadStats();
+    } catch { showModalMsg('ban-msg', '서버 오류가 발생했어요', 'error'); }
+  }
+
+  async function doUnban(id) {
+    if (!confirm('차단을 해제할까요?')) return;
+    await fetch(`${API}/api/admin/users/${id}/unban`, { method: 'POST', headers: Auth.headers() });
+    await loadUsers();
+    loadStats();
+  }
+
+  // ─── Delete User ──────────────────────────────────
+  function openDeleteUserModal(id, username) {
+    currentDeleteTarget = id;
+    document.getElementById('delete-user-name').textContent = username;
+    document.getElementById('delete-user-msg').innerHTML = '';
+    document.getElementById('delete-user-modal').style.display = 'flex';
+  }
+
+  function closeDeleteUserModal() {
+    document.getElementById('delete-user-modal').style.display = 'none';
+    currentDeleteTarget = null;
+  }
+
+  async function confirmDeleteUser() {
+    if (!currentDeleteTarget) return;
+    try {
+      const res = await fetch(`${API}/api/admin/users/${currentDeleteTarget}`, {
+        method: 'DELETE', headers: Auth.headers(),
+      });
+      const d = await res.json();
+      if (!res.ok) { showModalMsg('delete-user-msg', d.message || '오류가 발생했어요', 'error'); return; }
+      closeDeleteUserModal();
+      await loadUsers();
+      loadStats();
+    } catch { showModalMsg('delete-user-msg', '서버 오류가 발생했어요', 'error'); }
+  }
+
+  // ─── Posts ────────────────────────────────────────
+  async function loadPosts(q) {
+    const url = q ? `${API}/api/admin/posts?q=${encodeURIComponent(q)}` : `${API}/api/admin/posts`;
+    try {
+      const res = await fetch(url, { headers: Auth.headers() });
+      if (!res.ok) return;
+      const posts = await res.json();
+      document.getElementById('posts-count').textContent = `${posts.length}개`;
+      renderPosts(posts);
+    } catch {}
+  }
+
+  function searchPosts() {
+    clearTimeout(postSearchTimer);
+    postSearchTimer = setTimeout(() => loadPosts(document.getElementById('post-search').value.trim()), 300);
+  }
+
+  function renderPosts(posts) {
+    const tbody = document.getElementById('posts-tbody');
+    if (!posts.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="4">게시물이 없어요</td></tr>';
+      return;
+    }
+    tbody.innerHTML = posts.map(p => `<tr>
+      <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</td>
+      <td>${esc(p.author)}</td>
+      <td>${fmtDate(p.createdAt)}</td>
+      <td>
+        <div class="action-wrap">
+          <button class="btn-action btn-edit" onclick="openEditPost('${p._id}','${esc(p.title).replace(/'/g,"\\'")}',${'`'}${esc(p.content)}${'`'})">수정</button>
+          <button class="btn-action btn-del" onclick="doDeletePost('${p._id}')">삭제</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  }
+
+  async function doDeletePost(id) {
+    if (!confirm('이 게시물을 삭제할까요?')) return;
+    await fetch(`${API}/api/admin/posts/${id}`, { method: 'DELETE', headers: Auth.headers() });
+    loadPosts(document.getElementById('post-search').value.trim());
+    loadStats();
+  }
+
+  // ─── Edit Post ────────────────────────────────────
+  function openEditPost(id, title, content) {
+    currentEditPost = id;
+    document.getElementById('edit-post-title').value = title;
+    document.getElementById('edit-post-content').value = content;
+    document.getElementById('edit-post-msg').innerHTML = '';
+    document.getElementById('edit-post-modal').style.display = 'flex';
+  }
+
+  function closeEditPostModal() {
+    document.getElementById('edit-post-modal').style.display = 'none';
+    currentEditPost = null;
+  }
+
+  async function confirmEditPost() {
+    if (!currentEditPost) return;
+    const title = document.getElementById('edit-post-title').value.trim();
+    const content = document.getElementById('edit-post-content').value.trim();
+    if (!title || !content) { showModalMsg('edit-post-msg', '제목과 내용을 입력해주세요', 'error'); return; }
+    try {
+      const res = await fetch(`${API}/api/admin/posts/${currentEditPost}`, {
+        method: 'PATCH', headers: Auth.headers(), body: JSON.stringify({ title, content }),
+      });
+      const d = await res.json();
+      if (!res.ok) { showModalMsg('edit-post-msg', d.message || '오류가 발생했어요', 'error'); return; }
+      closeEditPostModal();
+      loadPosts(document.getElementById('post-search').value.trim());
+    } catch { showModalMsg('edit-post-msg', '서버 오류가 발생했어요', 'error'); }
+  }
+
+  // ─── 유틸 ─────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+
+  function showModalMsg(id, text, type) {
+    document.getElementById(id).innerHTML =
+      `<div class="msg msg-${type === 'error' ? 'error' : 'success'}">${esc(text)}</div>`;
+  }
+
+  // 모달 외부 클릭 시 닫기
+  ['ban-modal','delete-user-modal','edit-post-modal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+  });
+</script>
+</body>
+</html>

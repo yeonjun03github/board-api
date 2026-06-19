@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내 정보 관리</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="/auth.js"></script>
+    <style>
+        :root {
+            --blue: #1a56db; --blue-dark: #1e3a8a; --blue-pale: #eff6ff; --blue-light: #dbeafe;
+            --white: #fff; --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-400: #94a3b8; --gray-600: #475569; --gray-800: #1e293b;
+            --red: #dc2626; --green: #16a34a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+        header {
+            background: var(--blue);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            box-shadow: 0 2px 8px rgba(26,86,219,0.3);
+        }
+        header h1 { color: #fff; font-size: 18px; font-weight: 600; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        nav { display: flex; gap: 6px; }
+        nav a { color: #93c5fd; text-decoration: none; font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: 8px; transition: all 0.15s; }
+        nav a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+        nav a.active { background: #fff; color: var(--blue); }
+        #auth-area { display: flex; align-items: center; gap: 10px; }
+
+        .container { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+
+        .profile-header {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 14px;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .avatar {
+            width: 56px; height: 56px;
+            background: var(--blue-light);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+        .profile-header h2 { font-size: 18px; font-weight: 600; color: var(--gray-800); }
+        .profile-header p  { font-size: 13px; color: var(--gray-400); margin-top: 3px; }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 2px solid var(--gray-200); }
+        .tab {
+            padding: 10px 20px; font-size: 14px; font-weight: 500; color: var(--gray-400);
+            cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+        }
+        .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .card h3 { font-size: 15px; font-weight: 600; color: var(--gray-800); margin-bottom: 1.25rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-600); margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; border: 1px solid var(--gray-200); border-radius: 8px;
+            padding: 10px 12px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif;
+            color: var(--gray-800); outline: none; transition: border-color 0.15s; background: var(--white);
+        }
+        .form-group input:focus { border-color: var(--blue); }
+        .form-group input[readonly] { background: var(--gray-50); color: var(--gray-400); cursor: not-allowed; }
+
+        .btn {
+            border: none; border-radius: 8px; padding: 9px 20px; font-size: 14px; font-weight: 500;
+            cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: background 0.15s;
+        }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .btn-danger  { background: #fee2e2; color: var(--red); }
+        .btn-danger:hover { background: #fecaca; }
+
+        .msg { padding: 8px 12px; border-radius: 8px; font-size: 13px; margin-top: 0.75rem; display: none; }
+        .msg.error   { background: #fee2e2; color: var(--red); display: block; }
+        .msg.success { background: #d1fae5; color: var(--green); display: block; }
+
+        .item-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-card {
+            background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px;
+            padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+        }
+        .item-card .item-title { font-size: 14px; font-weight: 600; color: var(--gray-800); margin-bottom: 4px; }
+        .item-card .item-meta  { font-size: 12px; color: var(--gray-400); }
+        .item-card .item-content { font-size: 13px; color: var(--gray-600); margin-top: 4px; }
+        .msg-empty { text-align: center; padding: 3rem; font-size: 14px; color: var(--gray-400); }
+    </style>
+</head>
+<body>
+<header>
+    <h1>👤 내 정보 관리</h1>
+    <div class="header-right">
+        <nav>
+            <a href="/">홈</a>
+            <a href="/board">게시판</a>
+            <a href="/blog">블로그</a>
+            <a href="/news">뉴스</a>
+        </nav>
+        <div id="auth-area"></div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="profile-header">
+        <div class="avatar">👤</div>
+        <div>
+            <h2 id="ph-nickname">-</h2>
+            <p id="ph-username">-</p>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('info')">기본 정보</div>
+        <div class="tab" onclick="switchTab('posts')">내 게시글</div>
+        <div class="tab" onclick="switchTab('blogs')">내 블로그</div>
+        <div class="tab" onclick="switchTab('comments')">내 댓글</div>
+        <div class="tab" onclick="switchTab('news')">내 기사</div>
+    </div>
+
+    <!-- 기본 정보 -->
+    <div class="panel active" id="panel-info">
+        <div class="card">
+            <h3>기본 정보 수정</h3>
+            <div class="form-group">
+                <label>아이디</label>
+                <input type="text" id="info-username" readonly />
+            </div>
+            <div class="form-group">
+                <label>닉네임</label>
+                <input type="text" id="info-nickname" placeholder="닉네임" />
+            </div>
+            <div class="form-group">
+                <label>이메일</label>
+                <input type="email" id="info-email" placeholder="이메일 (선택)" />
+            </div>
+            <button class="btn btn-primary" onclick="saveProfile()">저장</button>
+            <div class="msg" id="info-msg"></div>
+        </div>
+
+        <div class="card">
+            <h3>비밀번호 변경</h3>
+            <div class="form-group">
+                <label>현재 비밀번호</label>
+                <input type="password" id="pw-current" placeholder="현재 비밀번호" />
+            </div>
+            <div class="form-group">
+                <label>새 비밀번호 <span style="color:var(--gray-400);font-weight:400">(6자 이상)</span></label>
+                <input type="password" id="pw-new" placeholder="새 비밀번호" />
+            </div>
+            <div class="form-group">
+                <label>새 비밀번호 확인</label>
+                <input type="password" id="pw-confirm" placeholder="새 비밀번호 재입력" />
+            </div>
+            <button class="btn btn-primary" onclick="changePassword()">비밀번호 변경</button>
+            <div class="msg" id="pw-msg"></div>
+        </div>
+    </div>
+
+    <!-- 내 게시글 -->
+    <div class="panel" id="panel-posts">
+        <div class="card">
+            <h3>내가 작성한 게시글</h3>
+            <div id="my-posts-list"><div class="msg-empty">불러오는 중...</div></div>
+        </div>
+    </div>
+
+    <!-- 내 블로그 -->
+    <div class="panel" id="panel-blogs">
+        <div class="card">
+            <h3>내가 작성한 블로그</h3>
+            <div id="my-blogs-list"><div class="msg-empty">불러오는 중...</div></div>
+        </div>
+    </div>
+
+    <!-- 내 댓글 -->
+    <div class="panel" id="panel-comments">
+        <div class="card">
+            <h3>내가 작성한 댓글</h3>
+            <div id="my-comments-list"><div class="msg-empty">불러오는 중...</div></div>
+        </div>
+    </div>
+
+    <!-- 내 기사 -->
+    <div class="panel" id="panel-news">
+        <div class="card">
+            <h3>내가 작성한 기사</h3>
+            <div id="my-news-list"><div class="msg-empty">불러오는 중...</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (!Auth.requireLogin()) { /* requireLogin이 redirect 처리 */ }
+    Auth.renderAuthArea('#93c5fd');
+
+    const user = Auth.getUser();
+
+    async function init() {
+        try {
+            const res = await fetch('/api/users/me', { headers: Auth.headers() });
+            const me = await res.json();
+            document.getElementById('ph-nickname').textContent = me.nickname;
+            document.getElementById('ph-username').textContent = '@' + me.username;
+            document.getElementById('info-username').value = me.username;
+            document.getElementById('info-nickname').value = me.nickname;
+            document.getElementById('info-email').value = me.email || '';
+        } catch {}
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab').forEach((el, i) => {
+            const names = ['info','posts','blogs','comments','news'];
+            el.classList.toggle('active', names[i] === name);
+        });
+        document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+        document.getElementById(`panel-${name}`).classList.add('active');
+
+        if (name === 'posts')    loadMyPosts();
+        if (name === 'blogs')    loadMyBlogs();
+        if (name === 'comments') loadMyComments();
+        if (name === 'news')     loadMyNews();
+    }
+
+    function showMsg(id, text, type) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = `msg ${type}`;
+        setTimeout(() => { el.className = 'msg'; }, 3000);
+    }
+
+    async function saveProfile() {
+        const nickname = document.getElementById('info-nickname').value.trim();
+        const email    = document.getElementById('info-email').value.trim();
+        if (!nickname) { showMsg('info-msg','닉네임을 입력해주세요.','error'); return; }
+        try {
+            const res = await fetch('/api/users/me', {
+                method: 'PATCH',
+                headers: Auth.headers(),
+                body: JSON.stringify({ nickname, email: email || undefined }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            // localStorage 닉네임 갱신
+            Auth.setSession(Auth.getToken(), { ...Auth.getUser(), nickname: data.nickname });
+            document.getElementById('ph-nickname').textContent = data.nickname;
+            Auth.renderAuthArea('#93c5fd');
+            showMsg('info-msg','저장됐어요.','success');
+        } catch (e) { showMsg('info-msg', e.message, 'error'); }
+    }
+
+    async function changePassword() {
+        const currentPassword = document.getElementById('pw-current').value;
+        const newPassword     = document.getElementById('pw-new').value;
+        const confirm         = document.getElementById('pw-confirm').value;
+        if (!currentPassword || !newPassword) { showMsg('pw-msg','모든 항목을 입력해주세요.','error'); return; }
+        if (newPassword !== confirm) { showMsg('pw-msg','새 비밀번호가 일치하지 않아요.','error'); return; }
+        try {
+            const res = await fetch('/api/users/me/password', {
+                method: 'PATCH',
+                headers: Auth.headers(),
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            document.getElementById('pw-current').value = '';
+            document.getElementById('pw-new').value = '';
+            document.getElementById('pw-confirm').value = '';
+            showMsg('pw-msg','비밀번호가 변경됐어요.','success');
+        } catch (e) { showMsg('pw-msg', e.message, 'error'); }
+    }
+
+    async function loadMyPosts() {
+        const el = document.getElementById('my-posts-list');
+        try {
+            const res = await fetch('/api/users/me/posts', { headers: Auth.headers() });
+            const list = await res.json();
+            if (!list.length) { el.innerHTML = '<div class="msg-empty">작성한 게시글이 없어요.</div>'; return; }
+            el.innerHTML = `<div class="item-list">${list.map(p => `
+                <div class="item-card">
+                    <div>
+                        <div class="item-title">${escHtml(p.title)}</div>
+                        <div class="item-meta">${new Date(p.createdAt).toLocaleDateString('ko-KR')}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deletePost('${p._id}')">삭제</button>
+                </div>`).join('')}</div>`;
+        } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
+    }
+
+    async function loadMyBlogs() {
+        const el = document.getElementById('my-blogs-list');
+        try {
+            const res = await fetch('/api/users/me/blogs', { headers: Auth.headers() });
+            const list = await res.json();
+            if (!list.length) { el.innerHTML = '<div class="msg-empty">작성한 블로그가 없어요.</div>'; return; }
+            el.innerHTML = `<div class="item-list">${list.map(b => `
+                <div class="item-card">
+                    <div>
+                        <div class="item-title">${escHtml(b.title)}</div>
+                        <div class="item-meta">${new Date(b.createdAt).toLocaleDateString('ko-KR')} · 조회 ${b.views}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteBlog('${b._id}')">삭제</button>
+                </div>`).join('')}</div>`;
+        } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
+    }
+
+    async function loadMyComments() {
+        const el = document.getElementById('my-comments-list');
+        try {
+            const res = await fetch('/api/users/me/comments', { headers: Auth.headers() });
+            const list = await res.json();
+            if (!list.length) { el.innerHTML = '<div class="msg-empty">작성한 댓글이 없어요.</div>'; return; }
+            el.innerHTML = `<div class="item-list">${list.map(c => `
+                <div class="item-card">
+                    <div>
+                        <div class="item-content">${escHtml(c.content)}</div>
+                        <div class="item-meta">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteComment('${c.blogId}','${c._id}')">삭제</button>
+                </div>`).join('')}</div>`;
+        } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
+    }
+
+    async function loadMyNews() {
+        const el = document.getElementById('my-news-list');
+        try {
+            const res = await fetch('/api/users/me/news', { headers: Auth.headers() });
+            const list = await res.json();
+            if (!list.length) { el.innerHTML = '<div class="msg-empty">작성한 기사가 없어요.</div>'; return; }
+            el.innerHTML = `<div class="item-list">${list.map(n => `
+                <div class="item-card">
+                    <div>
+                        <div class="item-title">${escHtml(n.title)}</div>
+                        <div class="item-meta">[${n.category}] ${new Date(n.createdAt).toLocaleDateString('ko-KR')}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteNews('${n._id}')">삭제</button>
+                </div>`).join('')}</div>`;
+        } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
+    }
+
+    async function deletePost(id) {
+        if (!confirm('삭제할까요?')) return;
+        await fetch(`/posts/${id}`, { method: 'DELETE', headers: Auth.headers() });
+        loadMyPosts();
+    }
+    async function deleteBlog(id) {
+        if (!confirm('삭제할까요?')) return;
+        await fetch(`/blogs/${id}`, { method: 'DELETE', headers: Auth.headers() });
+        loadMyBlogs();
+    }
+    async function deleteComment(blogId, commentId) {
+        if (!confirm('삭제할까요?')) return;
+        await fetch(`/blogs/${blogId}/comments/${commentId}`, { method: 'DELETE', headers: Auth.headers() });
+        loadMyComments();
+    }
+    async function deleteNews(id) {
+        if (!confirm('삭제할까요?')) return;
+        await fetch(`/api/news/${id}`, { method: 'DELETE', headers: Auth.headers() });
+        loadMyNews();
+    }
+
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    init();
+</script>
+</body>
+</html>
