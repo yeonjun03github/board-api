@@ -65,10 +65,10 @@ export class PostsService {
         return await this.commentModel.find({ postId }).sort({ createdAt: 1 }).exec();
     }
 
-    async addComment(postId: string, dto: CreateCommentDto): Promise<Comment> {
+    async addComment(postId: string, dto: CreateCommentDto, author: string, authorId: string): Promise<Comment> {
         this.validateId(postId);
         const post = await this.postModel.findById(postId).exec();
         if (!post) throw new NotFoundException(`게시글을 찾을 수 없어요`);
-        return await this.commentModel.create({ postId, ...dto });
+        return await this.commentModel.create({ postId, ...dto, author, authorId });
     }
 }

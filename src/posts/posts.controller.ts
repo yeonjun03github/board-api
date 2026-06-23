@@ -44,7 +44,7 @@ export class PostsController {
 
     @Post(':id/comments')
     @UseGuards(JwtAuthGuard)
-    addComment(@Param('id') id: string, @Body() dto: CreateCommentDto) {
-        return this.postsService.addComment(id, dto);
+    addComment(@Param('id') id: string, @Body() dto: CreateCommentDto, @Req() req: any) {
+        return this.postsService.addComment(id, dto, req.user.nickname, req.user.userId);
     }
 }

@@ -12,6 +12,9 @@ export class Comment {
     author: string;
 
     @Prop({ required: true })
+    authorId: string;
+
+    @Prop({ required: true })
     text: string;
 }
 
