@@ -30,11 +30,6 @@
         #auth-area { display: flex; align-items: center; gap: 10px; }
 
         .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
-        .stat-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 1rem 1.25rem; }
-        .stat-card .label { font-size: 12px; color: var(--gray-400); margin-bottom: 4px; }
-        .stat-card .value { font-size: 24px; font-weight: 600; color: var(--blue-primary); }
-
         .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
         .toolbar-info { font-size: 13px; color: var(--gray-600); }
 
@@ -46,7 +41,7 @@
         .btn-danger { background: #fee2e2; color: var(--red); border: none; }
         .btn-danger:hover { background: #fecaca; }
 
-        .search-wrap { display: flex; gap: 8px; margin-bottom: 1rem; }
+        .search-wrap { display: flex; gap: 8px; margin-top: 1rem; }
         .search-wrap input { flex: 1; border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 14px; font-size: 14px; font-family: 'Noto Sans KR', sans-serif; color: var(--gray-800); outline: none; transition: border-color 0.15s; }
         .search-wrap input:focus { border-color: var(--blue-primary); }
 
@@ -70,7 +65,9 @@
         .pagination { display: flex; justify-content: center; gap: 4px; margin-top: 1.5rem; }
         .page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-size: 14px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; transition: all 0.12s; }
         .page-btn.active { background: var(--blue-primary); color: var(--white); border-color: var(--blue-primary); font-weight: 600; }
-        .page-btn:hover:not(.active) { background: var(--blue-pale); border-color: var(--blue-light); }
+        .page-btn:hover:not(.active):not(:disabled) { background: var(--blue-pale); border-color: var(--blue-light); }
+        .page-btn:disabled { opacity: 0.35; cursor: default; }
+        .page-arrow { font-size: 16px; }
 
         .msg { text-align: center; padding: 3rem; font-size: 14px; color: var(--gray-400); }
         .msg.error { color: var(--red); }
@@ -126,21 +123,9 @@
 </header>
 
 <div class="container" id="board-view">
-    <div class="stats">
-        <div class="stat-card"><div class="label">전체 게시글</div><div class="value" id="total-count">-</div></div>
-        <div class="stat-card"><div class="label">서버 상태</div><div class="value" id="server-state" style="font-size:15px;padding-top:5px;">확인 중</div></div>
-        <div class="stat-card"><div class="label">현재 페이지</div><div class="value" id="current-page-stat">1</div></div>
-    </div>
-
     <div class="toolbar">
         <span class="toolbar-info" id="list-info">게시글 목록</span>
         <button class="btn btn-primary" onclick="openWrite()">✏️ 글쓰기</button>
-    </div>
-
-    <div class="search-wrap">
-        <input type="text" id="search-input" placeholder="제목, 작성자, 내용으로 검색하세요" onkeydown="if(event.key==='Enter') searchPosts()" />
-        <button class="btn btn-primary" onclick="searchPosts()">🔍 검색</button>
-        <button class="btn btn-secondary" onclick="resetSearch()">초기화</button>
     </div>
 
     <div class="table-wrap">
@@ -150,6 +135,11 @@
         </table>
     </div>
     <div class="pagination" id="pagination"></div>
+    <div class="search-wrap">
+        <input type="text" id="search-input" placeholder="제목, 작성자, 내용으로 검색하세요" onkeydown="if(event.key==='Enter') searchPosts()" />
+        <button class="btn btn-primary" onclick="searchPosts()">🔍 검색</button>
+        <button class="btn btn-secondary" onclick="resetSearch()">초기화</button>
+    </div>
 </div>
 
 <!-- 글쓰기 모달 -->
@@ -216,14 +206,8 @@
             const res = await fetch(url);
             if (!res.ok) throw new Error();
             posts = await res.json();
-            document.getElementById('total-count').textContent = posts.length;
-            document.getElementById('server-state').textContent = '✅ 정상';
-            document.getElementById('server-state').style.color = 'var(--green)';
             renderPage(1);
         } catch {
-            document.getElementById('server-state').textContent = '❌ 오류';
-            document.getElementById('server-state').style.color = 'var(--red)';
-            document.getElementById('total-count').textContent = '-';
             document.getElementById('post-list').innerHTML = '<tr><td colspan="4" class="msg error">서버에 연결할 수 없어요.</td></tr>';
         }
     }
@@ -246,7 +230,6 @@
         const pagePosts = posts.slice(start, start + perPage);
         const tbody = document.getElementById('post-list');
         document.getElementById('list-info').textContent = `전체 ${posts.length}개 게시글`;
-        document.getElementById('current-page-stat').textContent = page;
 
         if (!posts.length) {
             tbody.innerHTML = '<tr><td colspan="4" class="msg">아직 작성된 게시글이 없어요.</td></tr>';
@@ -272,9 +255,12 @@
         const total = Math.ceil(posts.length / perPage);
         const pg = document.getElementById('pagination');
         if (total <= 1) { pg.innerHTML = ''; return; }
-        pg.innerHTML = Array.from({ length: total }, (_, i) =>
-            `<button class="page-btn ${i+1===currentPage?'active':''}" onclick="renderPage(${i+1})">${i+1}</button>`
+        const prev = `<button class="page-btn page-arrow" onclick="renderPage(${currentPage-1})" ${currentPage===1?'disabled':''}>&#171;</button>`;
+        const next = `<button class="page-btn page-arrow" onclick="renderPage(${currentPage+1})" ${currentPage===total?'disabled':''}>&#187;</button>`;
+        const nums = Array.from({ length: total }, (_, i) =>
+            `<button class="page-btn ${i+1===currentPage?'active':''}" onclick="renderPage(${i+1})">${i+1===currentPage?`[${i+1}]`:i+1}</button>`
         ).join('');
+        pg.innerHTML = prev + nums + next;
     }
 
     function openWrite() {
