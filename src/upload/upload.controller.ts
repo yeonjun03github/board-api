@@ -1,7 +1,7 @@
 import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 
 @Controller('upload')
 export class UploadController {
@@ -9,7 +9,7 @@ export class UploadController {
     @Post()
     @UseInterceptors(FileInterceptor('file', {
         storage: diskStorage({
-            destination: './public/uploads', // 저장 폴더
+            destination: join(__dirname, '..', 'public', 'uploads'),
             filename: (req, file, cb) => {
                 const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
                 cb(null, unique + extname(file.originalname)); // 파일명 중복 방지

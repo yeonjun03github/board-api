@@ -14,7 +14,7 @@ export class Post {
     @Prop({ required: true })
     author: string;
 
-    @Prop({ default: '' })
+    @Prop({ required: true })
     authorId: string;
 }
 
