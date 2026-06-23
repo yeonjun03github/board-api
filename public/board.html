@@ -336,8 +336,6 @@
         const myId = Auth.getUser()?.userId;
         document.getElementById('btn-delete').style.display =
             (myId && post.authorId === myId) ? 'inline-block' : 'none';
-
-        document.getElementById('comment-author').value = '';
         document.getElementById('comment-text').value = '';
     }
 
