@@ -22,7 +22,7 @@ import { UploadController } from './upload/upload.controller';
         }),
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, '..', 'public'),
-            serveStaticOptions: { index: false },
+            serveStaticOptions: { index: false, extensions: ['html'] },
         }),
         AuthModule,
         UsersModule,
