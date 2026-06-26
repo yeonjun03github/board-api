@@ -37,7 +37,9 @@ export class PostsService {
 
     async findOne(id: string): Promise<Post> {
         this.validateId(id);
-        const post = await this.postModel.findById(id).exec();
+        const post = await this.postModel
+            .findByIdAndUpdate(id, { $inc: { views: 1 } }, { returnDocument: 'after' })
+            .exec();
         if (!post) throw new NotFoundException(`게시글을 찾을 수 없어요`);
         return post;
     }

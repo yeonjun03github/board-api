@@ -14,7 +14,7 @@ export class JwtAuthGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const token = this.extractToken(request);
-        if (!token) throw new UnauthorizedException('로그인이 필요해요');
+        if (!token) throw new UnauthorizedException('로그인이 필요합니다');
 
         let payload: any;
         try {
@@ -22,16 +22,16 @@ export class JwtAuthGuard implements CanActivate {
                 secret: this.configService.get<string>('JWT_SECRET'),
             });
         } catch {
-            throw new UnauthorizedException('유효하지 않은 토큰이에요');
+            throw new UnauthorizedException('유효하지 않은 토큰입니다');
         }
 
         const user = await this.usersService.findById(payload.sub);
-        if (!user) throw new UnauthorizedException('존재하지 않는 계정이에요');
+        if (!user) throw new UnauthorizedException('존재하지 않는 계정입니다');
 
         if (user.status === 'banned') {
             const now = new Date();
             if (!user.banUntil || user.banUntil > now) {
-                throw new ForbiddenException('차단된 계정이에요');
+                throw new ForbiddenException('차단된 계정입니다');
             }
             await this.usersService.unban(user._id.toString());
         }

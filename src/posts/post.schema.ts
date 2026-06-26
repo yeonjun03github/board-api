@@ -16,6 +16,9 @@ export class Post {
 
     @Prop({ required: true })
     authorId: string;
+
+    @Prop({ default: 0 })
+    views: number;
 }
 
 export const PostSchema = SchemaFactory.createForClass(Post);

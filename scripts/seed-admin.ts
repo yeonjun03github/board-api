@@ -25,7 +25,7 @@ async function seed() {
 
     const existing = await UserModel.findOne({ role: 'admin' });
     if (existing) {
-        console.log(`관리자 계정이 이미 존재해요: ${existing.username}`);
+        console.log(`관리자 계정이 이미 존재합니다: ${existing.username}`);
         await mongoose.disconnect();
         return;
     }
