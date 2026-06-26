@@ -25,14 +25,14 @@ export class PostsService {
     }
 
     async findAll(search?: string): Promise<Post[]> {
-        if (!search) return await this.postModel.find().exec();
+        if (!search) return await this.postModel.find().sort({ createdAt: -1 }).exec();
         return await this.postModel.find({
             $or: [
                 { title:   { $regex: search, $options: 'i' } },
                 { content: { $regex: search, $options: 'i' } },
                 { author:  { $regex: search, $options: 'i' } },
             ],
-        }).exec();
+        }).sort({ createdAt: -1 }).exec();
     }
 
     async findOne(id: string): Promise<Post> {
