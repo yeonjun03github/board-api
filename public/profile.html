@@ -329,10 +329,9 @@
             el.innerHTML = `<div class="item-list">${list.map(c => `
                 <div class="item-card">
                     <div>
-                        <div class="item-content">${escHtml(c.content)}</div>
+                        <div class="item-content">${escHtml(c.text)}</div>
                         <div class="item-meta">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
                     </div>
-                    <button class="btn btn-danger" onclick="deleteComment('${c.blogId}','${c._id}')">삭제</button>
                 </div>`).join('')}</div>`;
         } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
     }

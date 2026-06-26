@@ -6,6 +6,7 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User, UserSchema } from './user.schema';
 import { Post, PostSchema } from '../posts/post.schema';
+import { Comment, CommentSchema } from '../posts/comment.schema';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Module({
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema },
             { name: Post.name, schema: PostSchema },
+            { name: Comment.name, schema: CommentSchema },
         ]),
     ],
     controllers: [UsersController],
