@@ -16,6 +16,9 @@ export class Comment {
 
     @Prop({ required: true })
     text: string;
+
+    @Prop({ type: String, default: null })
+    parentId: string | null;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);

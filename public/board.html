@@ -109,6 +109,14 @@
         .comment-textarea-wrap textarea { flex: 1; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; outline: none; resize: none; height: 60px; transition: border-color 0.15s; }
         .comment-textarea-wrap textarea:focus { border-color: var(--blue-primary); }
         .btn-sm { padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+        .comment-meta { justify-content: space-between; }
+        .comment-meta-left { display: flex; gap: 8px; align-items: center; }
+        .btn-reply { background: none; border: none; font-size: 12px; color: var(--gray-400); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .btn-reply:hover { color: var(--blue-primary); background: var(--blue-pale); }
+        .reply-item { margin-left: 1.25rem; border-left: 2px solid var(--blue-light); padding-left: 0.75rem; margin-top: 6px; }
+        .reply-input-wrap { margin-left: 1.25rem; margin-top: 6px; display: flex; gap: 6px; align-items: flex-end; }
+        .reply-input-wrap textarea { flex: 1; border: 1px solid var(--gray-200); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: 'Noto Sans KR', sans-serif; outline: none; resize: none; height: 52px; transition: border-color 0.15s; }
+        .reply-input-wrap textarea:focus { border-color: var(--blue-primary); }
     </style>
 </head>
 <body>
@@ -339,19 +347,64 @@
                 list.innerHTML = '<div class="comment-empty">아직 댓글이 없어요.</div>';
                 return;
             }
-            list.innerHTML = comments.map(c => {
+            const isLoggedIn = !!Auth.getUser();
+            const tops = comments.filter(c => !c.parentId);
+            const repliesOf = id => comments.filter(c => c.parentId === id);
+
+            const renderItem = (c, isReply) => {
                 const date = new Date(c.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-                return `<div class="comment-item">
+                const replyBtn = (!isReply && isLoggedIn)
+                    ? `<button class="btn-reply" onclick="toggleReplyInput('${c._id}')">답글</button>`
+                    : '';
+                return `<div class="comment-item ${isReply ? 'reply-item' : ''}">
                     <div class="comment-meta">
-                        <span class="author">${c.author}</span>
-                        <span class="date">${date}</span>
+                        <div class="comment-meta-left">
+                            <span class="author">${c.author}</span>
+                            <span class="date">${date}</span>
+                        </div>
+                        ${replyBtn}
                     </div>
                     <p class="text">${c.text}</p>
                 </div>`;
+            };
+
+            list.innerHTML = tops.map(c => {
+                const replies = repliesOf(c._id);
+                const replyInputId = `reply-input-${c._id}`;
+                const replyInput = isLoggedIn ? `
+                    <div class="reply-input-wrap" id="${replyInputId}" style="display:none">
+                        <textarea id="reply-text-${c._id}" placeholder="답글을 입력하세요"></textarea>
+                        <button class="btn btn-primary btn-sm" onclick="submitReply('${c._id}')">등록</button>
+                    </div>` : '';
+                return renderItem(c, false)
+                    + replies.map(r => renderItem(r, true)).join('')
+                    + replyInput;
             }).join('');
         } catch {
             list.innerHTML = '<div class="comment-empty">댓글을 불러올 수 없어요.</div>';
         }
+    }
+
+    function toggleReplyInput(commentId) {
+        const wrap = document.getElementById(`reply-input-${commentId}`);
+        if (!wrap) return;
+        const isHidden = wrap.style.display === 'none';
+        wrap.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) document.getElementById(`reply-text-${commentId}`)?.focus();
+    }
+
+    async function submitReply(parentId) {
+        const text = document.getElementById(`reply-text-${parentId}`)?.value.trim();
+        if (!text) return;
+        try {
+            const res = await fetch(`${API}/posts/${selectedId}/comments`, {
+                method: 'POST',
+                headers: Auth.headers(),
+                body: JSON.stringify({ text, parentId }),
+            });
+            if (!res.ok) throw new Error();
+            await renderComments(selectedId);
+        } catch { alert('답글 등록에 실패했어요.'); }
     }
 
     async function submitComment() {
