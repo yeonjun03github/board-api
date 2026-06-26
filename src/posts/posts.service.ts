@@ -73,4 +73,12 @@ export class PostsService {
         if (!post) throw new NotFoundException(`게시글을 찾을 수 없어요`);
         return await this.commentModel.create({ postId, ...dto, author, authorId });
     }
+
+    async removeComment(commentId: string, userId: string): Promise<void> {
+        this.validateId(commentId);
+        const comment = await this.commentModel.findById(commentId).exec();
+        if (!comment) throw new NotFoundException('댓글을 찾을 수 없어요');
+        if (comment.authorId !== userId) throw new ForbiddenException('본인 댓글만 삭제할 수 있어요');
+        await this.commentModel.findByIdAndDelete(commentId).exec();
+    }
 }

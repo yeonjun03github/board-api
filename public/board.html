@@ -422,7 +422,7 @@
         } catch { alert('댓글 등록에 실패했어요.'); }
     }
 
-    async function deletePost() {
+    async function Post() {
         if (!confirm('정말 삭제할까요?')) return;
         try {
             const res = await fetch(`${API}/posts/${selectedId}`, { method: 'DELETE', headers: Auth.headers() });

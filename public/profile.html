@@ -129,9 +129,7 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('info')">기본 정보</div>
         <div class="tab" onclick="switchTab('posts')">내 게시글</div>
-        <div class="tab" onclick="switchTab('blogs')">내 블로그</div>
         <div class="tab" onclick="switchTab('comments')">내 댓글</div>
-        <div class="tab" onclick="switchTab('news')">내 기사</div>
     </div>
 
     <!-- 기본 정보 -->
@@ -226,16 +224,14 @@
 
     function switchTab(name) {
         document.querySelectorAll('.tab').forEach((el, i) => {
-            const names = ['info','posts','blogs','comments','news'];
+            const names = ['info','posts','comments'];
             el.classList.toggle('active', names[i] === name);
         });
         document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
         document.getElementById(`panel-${name}`).classList.add('active');
 
         if (name === 'posts')    loadMyPosts();
-        if (name === 'blogs')    loadMyBlogs();
         if (name === 'comments') loadMyComments();
-        if (name === 'news')     loadMyNews();
     }
 
     function showMsg(id, text, type) {
@@ -303,23 +299,6 @@
         } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
     }
 
-    async function loadMyBlogs() {
-        const el = document.getElementById('my-blogs-list');
-        try {
-            const res = await fetch('/api/users/me/blogs', { headers: Auth.headers() });
-            const list = await res.json();
-            if (!list.length) { el.innerHTML = '<div class="msg-empty">작성한 블로그가 없어요.</div>'; return; }
-            el.innerHTML = `<div class="item-list">${list.map(b => `
-                <div class="item-card">
-                    <div>
-                        <div class="item-title">${escHtml(b.title)}</div>
-                        <div class="item-meta">${new Date(b.createdAt).toLocaleDateString('ko-KR')} · 조회 ${b.views}</div>
-                    </div>
-                    <button class="btn btn-danger" onclick="deleteBlog('${b._id}')">삭제</button>
-                </div>`).join('')}</div>`;
-        } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
-    }
-
     async function loadMyComments() {
         const el = document.getElementById('my-comments-list');
         try {
@@ -332,6 +311,7 @@
                         <div class="item-content">${escHtml(c.text)}</div>
                         <div class="item-meta">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
                     </div>
+                    <button class="btn btn-danger" onclick="deleteComment('${c.postId}', '${c._id}')">삭제</button>
                 </div>`).join('')}</div>`;
         } catch { el.innerHTML = '<div class="msg-empty">불러오기 실패</div>'; }
     }
@@ -358,25 +338,15 @@
         await fetch(`/posts/${id}`, { method: 'DELETE', headers: Auth.headers() });
         loadMyPosts();
     }
-    async function deleteBlog(id) {
+    async function deleteComment(postId, commentId) {
         if (!confirm('삭제할까요?')) return;
-        await fetch(`/blogs/${id}`, { method: 'DELETE', headers: Auth.headers() });
-        loadMyBlogs();
-    }
-    async function deleteComment(blogId, commentId) {
-        if (!confirm('삭제할까요?')) return;
-        await fetch(`/blogs/${blogId}/comments/${commentId}`, { method: 'DELETE', headers: Auth.headers() });
+        await fetch(`/posts/${postId}/comments/${commentId}`, { method: 'DELETE', headers: Auth.headers() });
         loadMyComments();
-    }
-    async function deleteNews(id) {
-        if (!confirm('삭제할까요?')) return;
-        await fetch(`/api/news/${id}`, { method: 'DELETE', headers: Auth.headers() });
-        loadMyNews();
     }
 
     function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    init();
+    init()
 </script>
 </body>
 </html>

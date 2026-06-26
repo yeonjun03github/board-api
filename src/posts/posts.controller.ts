@@ -47,4 +47,10 @@ export class PostsController {
     addComment(@Param('id') id: string, @Body() dto: CreateCommentDto, @Req() req: any) {
         return this.postsService.addComment(id, dto, req.user.nickname, req.user.userId);
     }
+
+    @Delete(':postId/comments/:commentId')
+    @UseGuards(JwtAuthGuard)
+    removeComment(@Param('commentId') commentId: string, @Req() req: any) {
+        return this.postsService.removeComment(commentId, req.user.userId);
+    }
 }
